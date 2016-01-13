@@ -22,7 +22,7 @@ import com.project.todolist.model.User;
 import com.sun.xml.internal.bind.v2.runtime.unmarshaller.InterningXmlVisitor;
 
 /**
- * Servlet implementation class ToDoListPlatformConroller 1
+ * Servlet implementation class ToDoListPlatformConroller 2
  */
 @WebServlet("/controller/*")
 public class ToDoListPlatformConroller extends HttpServlet {
