@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Ajax Sample</title>
+    <script>
+        var request = new XMLHttpRequest();
+
+        /*
+        if (navigator.appName == "Microsoft Internet Explorer")
+        {
+            request = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+        else
+        {
+            request = new XMLHttpRequest();
+        }
+        */
+        function check_username(username)
+        {
+            request.abort();
+            request.open(
+                    "GET",
+                    "controller/signin?username="
+                    + username, true);
+            request.onreadystatechange= function()
+            {
+                if (request.readyState == 4 && request.status == 200)
+                {
+                    document.getElementById('msg').innerHTML =
+                            request.responseText;
+                }
+            };
+            request.send(null);
+        }
+    </script>
+</head>
+<body>
+<h1>Registration Form</h1>
+<form action="formprocess.php" method="get">
+    Username: <input name="username" type="text"
+                     onkeyup="check_username(this.value)" />
+    <br>
+    <div id='msg'></div>
+    <input type="submit">
+</form>
+</body>
+</html>
