@@ -26,7 +26,7 @@
 		<div class="jumbotron">
 			<h1>
 				<%
-					out.println(user.getUserName());
+					out.println(user.getUserName()+"'s");
 				%>
 				List of tasks
 			</h1>
@@ -36,7 +36,7 @@
 		<div class="row">
 			<div class="col-sm-4">
 				<h3>ToDoItem Title</h3>
-				<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit...</p>
+				<p>Lorem ipsum dolor sit amet, consectetur ...</p>
 
 			</div>
 			<div class="col-sm-4">
@@ -44,8 +44,8 @@
 				<p>Lorem ipsum dolor sit amet...</p>
 
 			</div>
-			<form action="Item">
-				<button class="btn btn-large btn-primary" type="submit">AddNewItem</button>
+			<form action="addItem" method="post">
+				<button class="btn btn-large btn-primary" type="submit">Add Item</button>
 
 
 			</form>

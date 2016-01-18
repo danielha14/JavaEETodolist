@@ -1,6 +1,7 @@
 
 <%
-	int userId = (int) session.getAttribute("userId");
+ 
+	String userId =   (String) session.getAttribute("userId");
 	session.setAttribute("userId", userId);
 %>
 </div>

@@ -22,7 +22,7 @@ import com.project.todolist.model.User;
 import com.sun.xml.internal.bind.v2.runtime.unmarshaller.InterningXmlVisitor;
 
 /**
- * Servlet implementation class ToDoListPlatformConroller 2
+ * Servlet implementation class ToDoListPlatformConroller
  */
 @WebServlet("/controller/*")
 public class ToDoListPlatformConroller extends HttpServlet {
@@ -31,8 +31,7 @@ public class ToDoListPlatformConroller extends HttpServlet {
 	/**
 	 * @see HttpServlet#HttpServlet()
 	 */
-	public ToDoListPlatformConroller() 
-	{
+	public ToDoListPlatformConroller() {
 		super();
 	}
 
@@ -41,199 +40,167 @@ public class ToDoListPlatformConroller extends HttpServlet {
 	 *      response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException
-	{
+			throws ServletException, IOException {
 		PrintWriter writer = response.getWriter();
 		StringBuffer sb = request.getRequestURL();
 		String url = sb.toString();
 		RequestDispatcher dispatcher = null;
-		if (url.endsWith("home"))
-		{
+		if (url.endsWith("home")) {
 			dispatcher = getServletContext().getRequestDispatcher("/home.jsp");
 			dispatcher.forward(request, response);
-		} 
-		else
-			if (url.endsWith("login"))
-			{
-				dispatcher = getServletContext().getRequestDispatcher("/login.jsp");
+		} else if (url.endsWith("login")) {
+			dispatcher = getServletContext().getRequestDispatcher("/login.jsp");
+			dispatcher.forward(request, response);
+		} else if (url.endsWith("toregister")) {
+			dispatcher = getServletContext().getRequestDispatcher("/register.jsp");
+			dispatcher.forward(request, response);
+		} else if (url.endsWith("addItem")) {
+			HibernateToDoListDAO model = HibernateToDoListDAO.getInstance();
+			List listOfUserItems = null;
+			String title = request.getParameter("title");
+			String description = request.getParameter("description");
+			int userId = (int) request.getSession().getAttribute("userId");
+			ToDoItem item = new ToDoItem(8, title, description, userId);
+			try {
+				model.addItem(item);
+				listOfUserItems = model.getUserItems(userId);
+				request.getSession().setAttribute("listOfUserItems", listOfUserItems);
+				request.getSession().setAttribute("userId", userId);
+				dispatcher = getServletContext().getRequestDispatcher("/userItems.jsp");
+				dispatcher.forward(request, response);
+			} catch (TodoListPlatformException e) {
+				dispatcher = getServletContext().getRequestDispatcher("/error.jsp");
 				dispatcher.forward(request, response);
 			}
-			else
-				if (url.endsWith("toregister"))
-				{
-					dispatcher = getServletContext().getRequestDispatcher("/register.jsp");
+
+		} else if (url.endsWith("signin")) {
+			HibernateToDoListDAO model = HibernateToDoListDAO.getInstance();
+			String userEmail = request.getParameter("email");
+			String userPassword = request.getParameter("password");
+
+			try {
+				//there are a problem in authenticateUser() method .
+				//need to find by ID not by userEmail(session.get(User.class,ID);)
+				boolean result = model.authenticateUser(userEmail, userPassword);
+				if (result) {
+					User user = model.getUserByEmail(userEmail);
+					//Use Cookie to displaying user name in Login page
+					String username = null;	
+					Cookie[] cookies = request.getCookies();
+					if(cookies!=null){
+						for (Cookie cooki : cookies) {
+							if(cooki.getName().equals("userName")){
+								username = cooki.getValue();
+								break;
+							}
+						}
+					}
+					//Create Cookie if the user Cookie wasn't created yet
+					if(username == null){
+						username = user.getUserName();
+						Cookie cookie = new Cookie("userName", username);
+						cookie.setMaxAge(2000);
+						response.addCookie(cookie);	
+					}
+
+				
+					dispatcher = getServletContext().getRequestDispatcher("/welcom.jsp");
 					dispatcher.forward(request, response);
+				} else {
+
+					response.sendRedirect("home.jsp");
+					response.getWriter().println("your password or id not right");
 				}
-				else
+			} catch (TodoListPlatformException e) {
+				dispatcher = getServletContext().getRequestDispatcher("/error.jsp");
+				dispatcher.forward(request, response);
+			}
+		} else if (url.endsWith("useritems")) {
+			HibernateToDoListDAO model = HibernateToDoListDAO.getInstance();
+			String userEmail = (String) request.getSession().getAttribute("email");
+			List listOfUserItems = null;
 
-					if (url.endsWith("addItem")) {
-						HibernateToDoListDAO model = HibernateToDoListDAO.getInstance();
-						List listOfUserItems = null;
-						String title = request.getParameter("title");
-						String description = request.getParameter("description");
-						int userId = (int) request.getSession().getAttribute("userId");
-						ToDoItem item = new ToDoItem(8, title, description, userId);
+			try {
+				User user = model.getUserByEmail(userEmail);
+				listOfUserItems = model.getUserItems(user.getId());
+				request.getSession().setAttribute("listOfUserItems", listOfUserItems);
+				request.getSession().setAttribute("user", user);
+				dispatcher = getServletContext().getRequestDispatcher("/userItems.jsp");
+				dispatcher.forward(request, response);
+			} catch (TodoListPlatformException e) {
+				dispatcher = getServletContext().getRequestDispatcher("/error.jsp");
+				dispatcher.forward(request, response);
+			}
+		} else if (url.endsWith("UpdateItem")) {
+			HibernateToDoListDAO model = HibernateToDoListDAO.getInstance();
+			List listOfUserItems = null;
+			String title = request.getParameter("title");
+			String description = request.getParameter("description");
+			int userId = (int) request.getSession().getAttribute("userId");
+			int itemid = Integer.parseInt((String) request.getSession().getAttribute("itemId"));
+			ToDoItem newItem = new ToDoItem(itemid, title, description, userId);
+			try {
+				model.updateItem(newItem);
+				listOfUserItems = model.getUserItems(userId);
+				request.getSession().setAttribute("listOfUserItems", listOfUserItems);
+				request.getSession().setAttribute("userId", userId);
+				dispatcher = getServletContext().getRequestDispatcher("/userItems.jsp");
+				dispatcher.forward(request, response);
 
-						try {
-							model.addItem(item);
-							listOfUserItems = model.getUserItems(userId);
-							request.getSession().setAttribute("listOfUserItems", listOfUserItems);
-							request.getSession().setAttribute("userId", userId);
-							dispatcher = getServletContext().getRequestDispatcher("/userItems.jsp");
-							dispatcher.forward(request, response);
-						}
-						catch (TodoListPlatformException e) 
-						{
-							dispatcher = getServletContext().getRequestDispatcher("/error.jsp");
-							dispatcher.forward(request, response);
-						}
+			} catch (TodoListPlatformException e) {
+				dispatcher = getServletContext().getRequestDispatcher("/error.jsp");
+				dispatcher.forward(request, response);
+			}
 
-					} 
-					else
-						if (url.endsWith("signin")) {
-							HibernateToDoListDAO model = HibernateToDoListDAO.getInstance();
-							String userEmail = request.getParameter("email");
-							String userPassword = request.getParameter("password");
+		} else if (url.endsWith("delete")) {
+			HibernateToDoListDAO model = HibernateToDoListDAO.getInstance();
+			List listOfUserItems = null;
+			int userId = (int) request.getSession().getAttribute("userId");
+			int itemId = Integer.parseInt((String) request.getParameter("itemToDelete"));
 
-							try {
-								boolean result = model.authenticateUser(userEmail, userPassword);
-								if (result) {
-									User user = model.getUserByEmail(userEmail);
-									Cookie cookie = new Cookie("userName", user.getUserName());
-									cookie.setMaxAge(1000);
-									response.addCookie(cookie);		
-									request.getSession().setAttribute("email", userEmail);
-									dispatcher = getServletContext().getRequestDispatcher("/welcom.jsp");
-									dispatcher.forward(request, response);
-								} 
-								else 
-								{
+			try {
+				ToDoItem item = model.getItemById(itemId);
+				model.deleteItem(item);
+				listOfUserItems = model.getUserItems(userId);
+				request.getSession().setAttribute("listOfUserItems", listOfUserItems);
+				request.getSession().setAttribute("userId", userId);
+				dispatcher = getServletContext().getRequestDispatcher("/userItems.jsp");
+				dispatcher.forward(request, response);
+			} catch (TodoListPlatformException e) {
 
-									response.sendRedirect("home.jsp");
-									response.getWriter().println("your password or id not right");
-								}
-							}
-							catch (TodoListPlatformException e) 
-							{
-								dispatcher = getServletContext().getRequestDispatcher("/error.jsp");
-								dispatcher.forward(request, response);
-							}
-						}
-						else
-							if(url.endsWith("useritems"))
-							{
-						    HibernateToDoListDAO model = HibernateToDoListDAO.getInstance();
-							String userEmail = (String)request.getSession().getAttribute("email");
-							List listOfUserItems = null;
-							
-							try {
-									User user = model.getUserByEmail(userEmail);	
-									listOfUserItems = model.getUserItems(user.getId());
-									request.getSession().setAttribute("listOfUserItems", listOfUserItems);
-									request.getSession().setAttribute("user", user);
-									dispatcher = getServletContext().getRequestDispatcher("/userItems.jsp");
-									dispatcher.forward(request, response);
-							}
-							catch (TodoListPlatformException e) 
-							{
-								dispatcher = getServletContext().getRequestDispatcher("/error.jsp");
-								dispatcher.forward(request, response);
-							}
-							}
-							else
-							if (url.endsWith("UpdateItem"))
-							{
-								HibernateToDoListDAO model = HibernateToDoListDAO.getInstance();
-								List listOfUserItems = null;
-								String title = request.getParameter("title");
-								String description = request.getParameter("description");
-								int userId = (int) request.getSession().getAttribute("userId");	
-								int itemid = Integer.parseInt((String)request.getSession().getAttribute("itemId"));
-								ToDoItem newItem = new ToDoItem(itemid, title, description, userId);
-								try 
-								{
-									model.updateItem(newItem);
-									listOfUserItems = model.getUserItems(userId);
-									request.getSession().setAttribute("listOfUserItems", listOfUserItems);
-									request.getSession().setAttribute("userId", userId);
-									dispatcher = getServletContext().getRequestDispatcher("/userItems.jsp");
-									dispatcher.forward(request, response);
+				dispatcher = getServletContext().getRequestDispatcher("/error.jsp");
+				dispatcher.forward(request, response);
+			}
 
-								}
-								catch (TodoListPlatformException e) 
-								{
-									dispatcher = getServletContext().getRequestDispatcher("/error.jsp");
-									dispatcher.forward(request, response);			}
+		} else if (url.endsWith("register")) {
+			HibernateToDoListDAO model = HibernateToDoListDAO.getInstance();
+			String userName = request.getParameter("userName");
+			String userId = request.getParameter("id");
+			String userEmail = request.getParameter("email");
+			String userPassword = request.getParameter("password");
+			User user = new User(Integer.parseInt(userId), userName, userEmail, userPassword);
+//need to check if exist user try to register (valid by email)
+			try {
+				model.addUser(user);
+				dispatcher = getServletContext().getRequestDispatcher("/home.jsp");
+				dispatcher.forward(request, response);
 
+			} catch (TodoListPlatformException e) {
+				dispatcher = getServletContext().getRequestDispatcher("/error.jsp");
+				dispatcher.forward(request, response);
+			}
+		} else if (url.endsWith("Item")) {
+			dispatcher = getServletContext().getRequestDispatcher("/AddNewItem.jsp");
+			dispatcher.forward(request, response);
 
-							}
-							else 
-								if (url.endsWith("delete")) 
-								{
-									HibernateToDoListDAO model = HibernateToDoListDAO.getInstance();
-									List listOfUserItems = null;
-									int userId = (int) request.getSession().getAttribute("userId");
-									int itemId = Integer.parseInt((String)request.getParameter("itemToDelete"));
+		} else if (url.endsWith("toUpdate")) {
+			dispatcher = getServletContext().getRequestDispatcher("/EditItem.jsp");
+			dispatcher.forward(request, response);
 
-									try 
-									{
-										ToDoItem item = model.getItemById(itemId);
-										model.deleteItem(item);
-										listOfUserItems = model.getUserItems(userId);
-										request.getSession().setAttribute("listOfUserItems", listOfUserItems);
-										request.getSession().setAttribute("userId", userId);
-										dispatcher = getServletContext().getRequestDispatcher("/userItems.jsp");
-										dispatcher.forward(request, response);
-									}
-									catch (TodoListPlatformException e) {
-
-										dispatcher = getServletContext().getRequestDispatcher("/error.jsp");
-										dispatcher.forward(request, response);
-									}
-
-								}
-								else
-									if (url.endsWith("register"))
-									{
-										HibernateToDoListDAO model = HibernateToDoListDAO.getInstance();
-										String userName = request.getParameter("userName");
-										String userId = request.getParameter("id");
-										String userEmail = request.getParameter("email");
-										String userPassword = request.getParameter("password");
-										User user = new User(Integer.parseInt(userId),userName,userEmail,userPassword);
-										
-
-										try 
-										{
-											model.addUser(user);
-											dispatcher = getServletContext().getRequestDispatcher("/home.jsp");
-											dispatcher.forward(request, response);
-
-										}
-										catch (TodoListPlatformException e) {
-											dispatcher = getServletContext().getRequestDispatcher("/error.jsp");
-											dispatcher.forward(request, response);
-										}
-									}
-									else
-										if (url.endsWith("Item"))
-										{
-											dispatcher = getServletContext().getRequestDispatcher("/AddNewItem.jsp");
-											dispatcher.forward(request, response);
-
-										}
-										else 
-											if (url.endsWith("toUpdate"))
-											{
-												dispatcher = getServletContext().getRequestDispatcher("/EditItem.jsp");
-												dispatcher.forward(request, response);
-
-											}
-											else
-											{
-												dispatcher = getServletContext().getRequestDispatcher("/error.jsp");
-												dispatcher.forward(request, response);
-											}
+		} else {
+			dispatcher = getServletContext().getRequestDispatcher("/error.jsp");
+			dispatcher.forward(request, response);
+		}
 	}
 
 	/**

@@ -3,7 +3,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title></title>
+    <title>welcome</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
@@ -20,10 +20,19 @@
             <span class="glyphicon glyphicon-leaf"></span>
         </h1>
     <%
+    String str="Guest";
+    Cookie[] cookies = request.getCookies(	);
+	if(cookies!=null){
+		for (Cookie cooki : cookies) {
+			if(cooki.getName().equals("userName")){
+				str = cooki.getValue();
+				break;
+			}
+		}
+	}
+    
 	String userName = (String)request.getAttribute("name");	
-	out.println("<p> Welcome "+userName+" </p>");		
-	String email = (String)request.getSession().getAttribute("email");
-	session.setAttribute("email", email);
+	out.println("<p> Welcome "+"<span  style='color:blue'>"+str+"</span > </p>");		
 	%>
     </div><!--jumbotron-->
         <div class="page-header">
