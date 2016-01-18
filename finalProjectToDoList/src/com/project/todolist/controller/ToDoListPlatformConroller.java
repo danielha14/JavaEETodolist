@@ -77,7 +77,6 @@ public class ToDoListPlatformConroller extends HttpServlet {
 			HibernateToDoListDAO model = HibernateToDoListDAO.getInstance();
 			String userEmail = request.getParameter("email");
 			String userPassword = request.getParameter("password");
-
 			try {
 				//there are a problem in authenticateUser() method .
 				//need to find by ID not by userEmail(session.get(User.class,ID);)
